@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import Navbar from './component/Navbar.jsx';
 import { loadContent, saveContent } from './data/contentRepository.js';
 import './App.css';
-const routePaths = ['/', '/people', '/project', '/events', '/more-info', '/admin'];
+const routePaths = ['/', '/staff-exco', '/people', '/project', '/events', '/more-info', '/admin'];
 
 function Arrow({ diagonal = false }) {
   return <span aria-hidden="true" className="arrow">{diagonal ? '↗' : '→'}</span>;
@@ -31,18 +31,18 @@ function Footer({ onNavigate }) {
       <div className="footer-main">
         <a className="brand footer-brand" href="/" onClick={(event) => onNavigate(event, '/')}>
           <img className="brand-logo" src="/nadss-logo.png" alt="" />
-          <span className="brand-copy"><strong>NADSS</strong><small>Nigeria Association of Data Science Students</small></span>
+          <span className="brand-copy"><strong>NADSS</strong><small>Nigeria Association of Data Science Students @ UniOsun-main-campus</small></span>
         </a>
         <p>Curious minds. Practical ideas.<br />A better future, built together.</p>
         <div className="footer-links">
-          <a href="/people" onClick={(event) => onNavigate(event, '/people')}>People</a>
+          <a href="/staff-exco" onClick={(event) => onNavigate(event, '/staff-exco')}>Staff & Exco</a>
           <a href="/project" onClick={(event) => onNavigate(event, '/project')}>Projects</a>
           <a href="/events" onClick={(event) => onNavigate(event, '/events')}>Events</a>
           <a href="/more-info" onClick={(event) => onNavigate(event, '/more-info')}>Get in touch</a>
         </div>
       </div>
       <div className="footer-bottom">
-        <span>© 2026 Nigeria Association of Data Science Students</span>
+        <span>© 2026 Nigeria Association of Data Science Students @ UniOsun-main-campus</span>
         <span>Made for the next big idea.</span>
       </div>
     </footer>
@@ -60,7 +60,7 @@ function HomePage({ content, onNavigate }) {
             <p className="hero-description">A home for curious minds, big questions, and ideas that make a difference. Come see what we’re working on.</p>
             <div className="hero-actions">
               <a className="button button-primary" href="/project" onClick={(event) => onNavigate(event, '/project')}>Explore our projects <Arrow /></a>
-              <a className="text-link" href="/people" onClick={(event) => onNavigate(event, '/people')}>Meet the people <Arrow /></a>
+              <a className="text-link" href="/staff-exco" onClick={(event) => onNavigate(event, '/staff-exco')}>Meet the people <Arrow /></a>
             </div>
             <div className="hero-note"><span className="avatar-stack"><i>J</i><i>A</i><i>M</i></span><span>Built by people who care<br /><strong>Students, staff & collaborators</strong></span></div>
           </div>
@@ -129,7 +129,7 @@ function ProjectGrid({ projects }) {
   );
 }
 
-function PeoplePage({ staff, executives }) {
+function StaffExcoPage({ staff, executives }) {
   return (
     <main className="page-main">
       <PageIntro eyebrow="The people behind the possibilities" title={<>Good work starts<br />with <span>good people.</span></>} description="Meet the staff who guide us, the student executives who bring us together, and the community we’re building." />
@@ -200,7 +200,7 @@ function MoreInfoPage() {
         <div className="info-grid">
           <article className="info-card"><span className="info-icon">⌖</span><span className="info-index">01 / FIND US</span><h3>Come on in.</h3><p>Department of Technology<br />Faculty Building, Block B<br />Main Campus</p><a href="mailto:department@university.edu">Get directions <Arrow diagonal /></a></article>
           <article className="info-card"><span className="info-icon">✉</span><span className="info-index">02 / SAY HELLO</span><h3>Talk to a human.</h3><p>Questions about a course, a project, or where to start? We’re happy to point you in the right direction.</p><a href="mailto:department@university.edu">department@university.edu <Arrow diagonal /></a></article>
-          <article className="info-card"><span className="info-icon">↗</span><span className="info-index">03 / STUDENT SUPPORT</span><h3>You don’t have to figure it out alone.</h3><p>For academic guidance, wellbeing support, and help finding the right person to talk to.</p><a href="/people">Meet the team <Arrow diagonal /></a></article>
+          <article className="info-card"><span className="info-icon">↗</span><span className="info-index">03 / STUDENT SUPPORT</span><h3>You don’t have to figure it out alone.</h3><p>For academic guidance, wellbeing support, and help finding the right person to talk to.</p><a href="/staff-exco">Meet the team <Arrow diagonal /></a></article>
           <article className="info-card"><span className="info-icon">▤</span><span className="info-index">04 / RESOURCES</span><h3>Good to know.</h3><p>Explore the department, discover student projects, and find your next opportunity to get involved.</p><a href="/project">Browse projects <Arrow diagonal /></a></article>
         </div>
       </section>
@@ -311,8 +311,9 @@ export default function App() {
 
   useEffect(() => {
     const titles = {
-      '/': 'NADSS | Nigeria Association of Data Science Students',
-      '/people': 'People | NADSS',
+      '/': 'NADSS | Nigeria Association of Data Science Students @ UniOsun-main-campus',
+      '/staff-exco': 'Staff & Exco | NADSS',
+      '/people': 'Staff & Exco | NADSS',
       '/project': 'Projects | NADSS',
       '/events': 'Events | NADSS',
       '/more-info': 'More information | NADSS',
@@ -333,7 +334,8 @@ export default function App() {
 
   let page;
   switch (currentPath) {
-    case '/people': page = <PeoplePage staff={content.staff} executives={content.executives} />; break;
+    case '/staff-exco':
+    case '/people': page = <StaffExcoPage staff={content.staff} executives={content.executives} />; break;
     case '/project': page = <ProjectsPage projects={content.projects} />; break;
     case '/events': page = <EventsPage events={content.events} />; break;
     case '/more-info': page = <MoreInfoPage />; break;

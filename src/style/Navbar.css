@@ -134,20 +134,28 @@
   }
 
   .main-nav {
-    display: none;
+    display: flex;
     position: absolute;
-    inset: 71px 0 auto;
+    inset: 71px 0 auto auto;
+    width: min(100%, 420px);
     padding: 12px 6% 22px;
     background: var(--paper);
     border-bottom: 1px solid var(--line);
     box-shadow: 0 14px 20px rgb(28 35 29 / 8%);
     align-items: stretch;
     gap: 0;
+    flex-direction: column;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateX(100%);
+    transition: transform 220ms ease, opacity 220ms ease, visibility 0s linear 220ms;
   }
 
   .main-nav.nav-open {
-    display: flex;
-    flex-direction: column;
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(0);
+    transition-delay: 0s;
   }
 
   .nav-link,
@@ -164,6 +172,12 @@
   .admin-link {
     width: fit-content;
     margin-top: 8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .main-nav {
+    transition: none;
   }
 }
 
