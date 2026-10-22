@@ -31,7 +31,7 @@ function Footer({ onNavigate }) {
       <div className="footer-main">
         <a className="brand footer-brand" href="/" onClick={(event) => onNavigate(event, '/')}>
           <img className="brand-logo" src="/nadss-logo.png" alt="" />
-          <span className="brand-copy"><strong>NADSS</strong><small>Nigeria Association of Data Science Students @ UniOsun-main-campus</small></span>
+          <span className="brand-copy"><strong>NADSS</strong><small>Nigeria Association of Data Science Students @ OSUN STATE UNIVERSITY</small></span>
         </a>
         <p>Curious minds. Practical ideas.<br />A better future, built together.</p>
         <div className="footer-links">
@@ -42,7 +42,7 @@ function Footer({ onNavigate }) {
         </div>
       </div>
       <div className="footer-bottom">
-        <span>© 2026 Nigeria Association of Data Science Students @ UniOsun-main-campus</span>
+        <span>© 2026 Nigeria Association of Data Science Students @ OSUN STATE UNIVERSITY</span>
         <span>Made for the next big idea.</span>
       </div>
     </footer>
@@ -311,7 +311,7 @@ export default function App() {
 
   useEffect(() => {
     const titles = {
-      '/': 'NADSS | Nigeria Association of Data Science Students @ UniOsun-main-campus',
+      '/': 'NADSS | Nigeria Association of Data Science Students @ OSUN STATE UNIVERSITY',
       '/staff-exco': 'Staff & Exco | NADSS',
       '/people': 'Staff & Exco | NADSS',
       '/project': 'Projects | NADSS',
