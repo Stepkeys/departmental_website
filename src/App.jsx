@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import Navbar from './component/Navbar.jsx';
 import { loadContent, saveContent } from './data/contentRepository.js';
 import './App.css';
@@ -349,5 +350,12 @@ export default function App() {
     if (anchor) navigate(event, anchor.pathname);
   }
 
-  return <div className="site-shell" onClick={handleInternalLink}><Navbar activePath={currentPath} onNavigate={navigate} />{page}<Footer onNavigate={navigate} /></div>;
+  return (
+    <div className="site-shell" onClick={handleInternalLink}>
+      <Navbar activePath={currentPath} onNavigate={navigate} />
+      {page}
+      <Footer onNavigate={navigate} />
+      <SpeedInsights />
+    </div>
+  );
 }
