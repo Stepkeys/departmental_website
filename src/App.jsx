@@ -1,8 +1,32 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Navbar from './component/Navbar.jsx';
 import { loadContent, saveContent } from './data/contentRepository.js';
 import './App.css';
 const routePaths = ['/', '/staff-exco', '/people', '/project', '/events', '/more-info', '/admin'];
+const maxEventUploadSize = 1024 * 1024;
+const maxMediaStorageSize = 2 * 1024 * 1024;
+const eventImageTypes = ['image/jpeg', 'image/png', 'image/webp'];
+
+function readUpload(file, { allowPdf = false, label = 'image' } = {}) {
+  if (!eventImageTypes.includes(file.type) && !(allowPdf && file.type === 'application/pdf')) {
+    return Promise.reject(new Error(allowPdf ? 'Choose a JPG, PNG, WebP, or PDF flyer.' : `Choose a JPG, PNG, or WebP ${label}.`));
+  }
+  if (file.size > maxEventUploadSize) {
+    return Promise.reject(new Error('Each event upload must be 1 MB or smaller.'));
+  }
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        resolve({ data: reader.result, name: file.name, type: file.type });
+      } else {
+        reject(new Error('The selected file could not be read.'));
+      }
+    };
+    reader.onerror = () => reject(new Error('The selected file could not be read.'));
+    reader.readAsDataURL(file);
+  });
+}
 
 function Arrow({ diagonal = false }) {
   return <span aria-hidden="true" className="arrow">{diagonal ? '↗' : '→'}</span>;
@@ -121,7 +145,11 @@ function ProjectGrid({ projects }) {
     <div className="project-grid">
       {projects.map((project) => (
         <article className="project-card" key={project.id}>
-          <div className={`project-visual ${project.color || 'lavender'}`}><span className="project-initials">{project.initials || 'P'}</span><span className="project-visual-mark">✳</span><span className="project-open"><Arrow diagonal /></span></div>
+          <div className={`project-visual ${project.color || 'lavender'}`}>
+            {project.image && <img className="project-image" src={project.image} alt={`Picture for ${project.title}`} />}
+            {!project.image && <span className="project-initials">{project.initials || 'P'}</span>}
+            <span className="project-visual-mark">✳</span><span className="project-open"><Arrow diagonal /></span>
+          </div>
           <div className="project-card-content"><span className="project-category">{project.category}</span><h3>{project.title}</h3><p>{project.description}</p><span className="project-team">{project.team || 'Student project'}</span></div>
         </article>
       ))}
@@ -149,7 +177,10 @@ function StaffExcoPage({ staff, executives }) {
 function PersonCard({ person, executive = false }) {
   return (
     <article className="person-card">
-      <div className={`person-photo ${person.color}`}><span>{person.initials}</span><span className="person-photo-symbol" aria-hidden="true">✳</span></div>
+      <div className={`person-photo ${person.color}`}>
+        {person.image ? <img className="person-image" src={person.image} alt={`Portrait of ${person.name}`} /> : <span>{person.initials}</span>}
+        <span className="person-photo-symbol" aria-hidden="true">✳</span>
+      </div>
       <div className="person-details"><h3>{person.name}</h3><p>{person.role}</p>{!executive && <span className="person-focus">{person.focus}</span>}</div>
       <span className="person-arrow" aria-hidden="true">↗</span>
     </article>
@@ -178,8 +209,14 @@ function EventsPage({ events }) {
         <div className="event-list">
           {events.map((event) => (
             <article className="event-card" key={event.id}>
+              <div className={`event-image-slot${event.image ? '' : ' event-image-empty'}`}>
+                {event.image ? <img className="event-image" src={event.image} alt={`Picture for ${event.title}`} /> : <span>Event image</span>}
+              </div>
               <div className="event-date"><strong>{event.day}</strong><span>{event.month}</span></div>
-              <div className="event-details"><span className="event-category">{event.category}</span><h3>{event.title}</h3><p>{event.time}<span>·</span>{event.location}</p></div>
+              <div className="event-details">
+                <span className="event-category">{event.category}</span><h3>{event.title}</h3><p>{event.time}<span>·</span>{event.location}</p>
+                {event.flyer && <a className="event-flyer" href={event.flyer} download={event.flyerName || `${event.title}-flyer`}>View event flyer <Arrow diagonal /></a>}
+              </div>
               <a className="event-arrow" href="/more-info" aria-label={`Ask about ${event.title}`}><Arrow diagonal /></a>
             </article>
           ))}
@@ -220,6 +257,10 @@ function AdminPage({ content, setContent }) {
   const [category, setCategory] = useState('');
   const [notice, setNotice] = useState('');
   const [editingId, setEditingId] = useState(null);
+  const [imageUpload, setImageUpload] = useState(undefined);
+  const [flyerUpload, setFlyerUpload] = useState(undefined);
+  const imageInputRef = useRef(null);
+  const flyerInputRef = useRef(null);
   const entries = content[kind];
   const isPerson = kind === 'staff' || kind === 'executives';
   const itemLabel = kind === 'news' ? 'a news update' : kind === 'projects' ? 'a project' : kind === 'events' ? 'an event' : kind === 'staff' ? 'a staff member' : 'a student executive';
@@ -239,6 +280,42 @@ function AdminPage({ content, setContent }) {
         : kind === 'projects'
           ? { id, category: category.trim() || 'Student project', title: title.trim(), description: description.trim(), initials: title.trim().slice(0, 2).toUpperCase(), color: existingItem?.color || ['lavender', 'mint', 'peach'][content.projects.length % 3], team: existingItem?.team || 'Department community' }
           : { id, category: category.trim() || 'Department news', date: new Date().toLocaleDateString('en', { month: 'long', day: 'numeric', year: 'numeric' }), title: title.trim(), excerpt: description.trim() };
+    if (kind === 'events') {
+      const image = imageUpload === undefined ? existingItem?.image : imageUpload?.data;
+      const flyer = flyerUpload === undefined ? existingItem?.flyer : flyerUpload?.data;
+      newItem.image = image || null;
+      newItem.imageName = image ? (imageUpload === undefined ? existingItem?.imageName : imageUpload.name) : null;
+      newItem.imageType = image ? (imageUpload === undefined ? existingItem?.imageType : imageUpload.type) : null;
+      newItem.flyer = flyer || null;
+      newItem.flyerName = flyer ? (flyerUpload === undefined ? existingItem?.flyerName : flyerUpload.name) : null;
+      newItem.flyerType = flyer ? (flyerUpload === undefined ? existingItem?.flyerType : flyerUpload.type) : null;
+    }
+    if (kind === 'projects') {
+      const image = imageUpload === undefined ? existingItem?.image : imageUpload?.data;
+      newItem.image = image || null;
+      newItem.imageName = image ? (imageUpload === undefined ? existingItem?.imageName : imageUpload.name) : null;
+      newItem.imageType = image ? (imageUpload === undefined ? existingItem?.imageType : imageUpload.type) : null;
+    }
+    if (isPerson) {
+      const image = imageUpload === undefined ? existingItem?.image : imageUpload?.data;
+      newItem.image = image || null;
+      newItem.imageName = image ? (imageUpload === undefined ? existingItem?.imageName : imageUpload.name) : null;
+      newItem.imageType = image ? (imageUpload === undefined ? existingItem?.imageType : imageUpload.type) : null;
+    }
+    if (kind === 'events' || kind === 'projects' || isPerson) {
+      const updatedItems = editingId
+        ? entries.map((item) => item.id === editingId ? newItem : item)
+        : [newItem, ...entries];
+      const mediaContent = { ...content, [kind]: updatedItems };
+      const mediaItems = [...mediaContent.events, ...mediaContent.projects, ...mediaContent.staff, ...mediaContent.executives];
+      const uploadSize = mediaItems.reduce((total, item) => total
+        + Math.ceil((item.image?.length || 0) * 0.75)
+        + Math.ceil((item.flyer?.length || 0) * 0.75), 0);
+      if (uploadSize > maxMediaStorageSize) {
+        setNotice('Event, project, staff, and exco images and flyers can use up to 2 MB combined in this browser. Remove an existing upload or choose smaller files.');
+        return;
+      }
+    }
     const wasEditing = Boolean(editingId);
     setContent((current) => ({
       ...current,
@@ -250,6 +327,8 @@ function AdminPage({ content, setContent }) {
     setDescription('');
     setCategory('');
     setEditingId(null);
+    setImageUpload(undefined);
+    setFlyerUpload(undefined);
     setNotice(wasEditing ? 'Your changes have been saved in this browser.' : isPerson ? 'The directory has been updated in this browser.' : 'Your update has been saved in this browser.');
   }
 
@@ -258,7 +337,36 @@ function AdminPage({ content, setContent }) {
     setTitle(item.name || item.title);
     setCategory(item.role || item.category || '');
     setDescription(item.focus || item.location || item.excerpt || item.description || '');
+    setImageUpload(item.image ? { data: item.image, name: item.imageName || (kind === 'events' ? 'Event picture' : 'Project image'), type: item.imageType || 'image/jpeg' } : null);
+    setFlyerUpload(item.flyer ? { data: item.flyer, name: item.flyerName || 'Event flyer', type: item.flyerType || 'application/pdf' } : null);
     setNotice('');
+  }
+
+  async function handleImageUpload(event) {
+    const input = event.currentTarget;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    try {
+      const label = kind === 'events' ? 'event picture' : kind === 'projects' ? 'project image' : 'profile picture';
+      setImageUpload(await readUpload(file, { label }));
+      setNotice('');
+    } catch (error) {
+      setNotice(error.message);
+    }
+  }
+
+  async function handleFlyerUpload(event) {
+    const input = event.currentTarget;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    try {
+      setFlyerUpload(await readUpload(file, { allowPdf: true }));
+      setNotice('');
+    } catch (error) {
+      setNotice(error.message);
+    }
   }
 
   function removeItem(id) {
@@ -268,6 +376,8 @@ function AdminPage({ content, setContent }) {
       setTitle('');
       setCategory('');
       setDescription('');
+      setImageUpload(undefined);
+      setFlyerUpload(undefined);
     }
     setNotice('The item has been removed.');
   }
@@ -277,14 +387,31 @@ function AdminPage({ content, setContent }) {
       <PageIntro eyebrow="Frontend demo · database integration ready" title={<>Keep the good<br /><span>things moving.</span></>} description="Manage department news, projects, events, staff, and student executives." />
       <section className="admin-panel">
         <div className="admin-notice"><span>ⓘ</span><p><strong>Frontend demo only:</strong> Updates are saved in this browser and are not shared with other users. The content repository is isolated in <code>src/data/contentRepository.js</code>, ready to connect to the database when the backend is available.</p></div>
-        <div className="admin-toolbar"><div><Eyebrow>Content studio</Eyebrow><h2>Manage your content</h2></div><div className="admin-tabs" role="tablist" aria-label="Content type">{[['news', 'News'], ['projects', 'Projects'], ['events', 'Events'], ['staff', 'Staff'], ['executives', 'Excos']].map(([value, label]) => <button type="button" role="tab" aria-selected={kind === value} className={kind === value ? 'admin-tab active' : 'admin-tab'} onClick={() => { setKind(value); setNotice(''); }} key={value}>{label}<span>{content[value].length}</span></button>)}</div></div>
+        <div className="admin-toolbar"><div><Eyebrow>Content studio</Eyebrow><h2>Manage your content</h2></div><div className="admin-tabs" role="tablist" aria-label="Content type">{[['news', 'News'], ['projects', 'Projects'], ['events', 'Events'], ['staff', 'Staff'], ['executives', 'Excos']].map(([value, label]) => <button type="button" role="tab" aria-selected={kind === value} className={kind === value ? 'admin-tab active' : 'admin-tab'} onClick={() => { setKind(value); setEditingId(null); setTitle(''); setDescription(''); setCategory(''); setImageUpload(undefined); setFlyerUpload(undefined); setNotice(''); }} key={value}>{label}<span>{content[value].length}</span></button>)}</div></div>
         <div className="admin-layout">
           <form className="admin-form" onSubmit={handleSubmit}>
             <span className="admin-form-label">{editingId ? 'EDIT' : 'CREATE'} {itemLabel.toUpperCase()}</span>
             <label htmlFor="content-title">{isPerson ? 'Name' : 'Title'}</label><input id="content-title" value={title} onChange={(event) => setTitle(event.target.value)} placeholder={isPerson ? 'Add their name' : 'Give it a good name'} maxLength={90} required />
             <label htmlFor="content-category">{isPerson ? 'Role' : 'Category'}{kind !== 'staff' && kind !== 'executives' && <span> (optional)</span>}</label><input id="content-category" value={category} onChange={(event) => setCategory(event.target.value)} placeholder={isPerson ? 'e.g. Lecturer or President' : kind === 'events' ? 'e.g. Workshop' : 'e.g. Department news'} maxLength={40} required={isPerson} />
             <label htmlFor="content-description">{kind === 'events' ? 'Location' : kind === 'staff' ? 'Focus area' : kind === 'executives' ? 'Short bio' : 'Description'}{isPerson && <span> (optional)</span>}</label><textarea id="content-description" value={description} onChange={(event) => setDescription(event.target.value)} placeholder={kind === 'events' ? 'Where will it happen?' : isPerson ? 'Add a little more information' : 'What should people know?'} rows="4" maxLength={240} required={!isPerson} />
-            <div className="admin-form-actions"><button className="button button-primary admin-submit" type="submit">{editingId ? 'Save changes' : isPerson ? 'Add to directory' : 'Publish update'} <Arrow /></button>{editingId && <button className="cancel-edit" type="button" onClick={() => { setEditingId(null); setTitle(''); setCategory(''); setDescription(''); setNotice(''); }}>Cancel</button>}</div>
+            {(kind === 'events' || kind === 'projects' || isPerson) && <>
+              <label htmlFor={`${kind}-picture`}>{kind === 'events' ? 'Event picture' : kind === 'projects' ? 'Project image' : 'Profile picture'} <span>(optional, JPG/PNG/WebP, max 1 MB)</span></label>
+              <input ref={imageInputRef} className="event-file-input" id={`${kind}-picture`} type="file" accept="image/jpeg,image/png,image/webp" onChange={handleImageUpload} />
+              <div className="media-upload-controls">
+                <button className="media-upload-button" type="button" onClick={() => imageInputRef.current?.click()}>{imageUpload?.data ? 'Change image' : isPerson ? 'Upload profile picture' : 'Upload image'}</button>
+                {imageUpload?.data && <><span className="media-upload-name">{imageUpload.name}</span><img className="media-upload-thumbnail" src={imageUpload.data} alt="Selected image preview" /><button className="remove-upload" type="button" onClick={() => setImageUpload(null)}>Remove</button></>}
+              </div>
+              {kind === 'events' && <>
+              <label htmlFor="event-flyer">Event flyer <span>(optional, JPG/PNG/WebP/PDF, max 1 MB)</span></label>
+              <input ref={flyerInputRef} className="event-file-input" id="event-flyer" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={handleFlyerUpload} />
+              <div className="media-upload-controls">
+                <button className="media-upload-button" type="button" onClick={() => flyerInputRef.current?.click()}>{flyerUpload?.data ? 'Change flyer' : 'Upload flyer'}</button>
+                {flyerUpload?.data && <><span className="media-upload-name">{flyerUpload.name}</span><button className="remove-upload" type="button" onClick={() => setFlyerUpload(null)}>Remove</button></>}
+              </div>
+              </>}
+              <p className="upload-hint">Images and flyers are saved in this browser, with a 2 MB total limit across events, projects, staff, and excos.</p>
+            </>}
+            <div className="admin-form-actions"><button className="button button-primary admin-submit" type="submit">{editingId ? 'Save changes' : isPerson ? 'Add to directory' : 'Publish update'} <Arrow /></button>{editingId && <button className="cancel-edit" type="button" onClick={() => { setEditingId(null); setTitle(''); setCategory(''); setDescription(''); setImageUpload(undefined); setFlyerUpload(undefined); setNotice(''); }}>Cancel</button>}</div>
             {notice && <p className="admin-feedback" role="status">{notice}</p>}
           </form>
           <div className="admin-items"><div className="admin-items-heading"><span>EXISTING {kind.toUpperCase()}</span><span>{entries.length} ITEMS</span></div>{entries.length ? entries.map((item) => <article className="admin-item" key={item.id}><div><span>{item.role || item.category}</span><h3>{item.name || item.title}</h3></div><div className="admin-item-actions"><button type="button" className="edit-button" onClick={() => editItem(item)} aria-label={`Edit ${item.name || item.title}`}>Edit</button><button type="button" className="remove-button" onClick={() => removeItem(item.id)} aria-label={`Remove ${item.name || item.title}`}>Remove</button></div></article>) : <p className="empty-state admin-empty">No {kind} yet. Create your first update.</p>}</div>

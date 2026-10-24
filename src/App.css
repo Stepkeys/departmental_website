@@ -464,6 +464,14 @@ a:hover .arrow {
   place-items: center;
 }
 
+.project-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .lavender {
   background: #ded9ec;
 }
@@ -704,6 +712,14 @@ a:hover .arrow {
   place-items: center;
 }
 
+.person-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .person-photo > span:first-child {
   color: rgb(49 58 43 / 72%);
   font-family: var(--serif);
@@ -794,11 +810,34 @@ a:hover .arrow {
   min-height: 112px;
   padding: 17px 7px;
   display: grid;
-  grid-template-columns: 70px 1fr 40px;
+  grid-template-columns: 120px 70px minmax(0, 1fr) 40px;
   align-items: center;
   gap: 23px;
   border-bottom: 1px solid var(--line);
   text-align: left;
+}
+
+.event-image-slot {
+  width: 120px;
+  height: 80px;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  border-radius: 3px;
+  background: #eaf2f5;
+}
+
+.event-image {
+  width: 120px;
+  height: 80px;
+  object-fit: cover;
+}
+
+.event-image-empty {
+  border: 1px dashed #c5d4d7;
+  color: #77877f;
+  font-size: 9px;
+  letter-spacing: 0.4px;
 }
 
 .event-date {
@@ -850,6 +889,17 @@ a:hover .arrow {
 .event-details > p span {
   margin: 0 8px;
   color: #a6aa9f;
+}
+
+.event-flyer {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 9px;
+  color: var(--green);
+  font-size: 10px;
+  font-weight: 650;
+  text-decoration: none;
 }
 
 .event-arrow {
@@ -1124,6 +1174,84 @@ a:hover .arrow {
 .admin-form textarea:focus {
   outline: 2px solid #9ab278;
   outline-offset: 1px;
+}
+
+.event-file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  clip-path: inset(50%);
+}
+
+.event-file-input:focus-visible + .media-upload-controls {
+  outline: 2px solid #9ab278;
+  outline-offset: 2px;
+}
+
+.media-upload-controls {
+  min-height: 54px;
+  padding: 9px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border: 1px dashed #c5d4d7;
+  border-radius: 3px;
+  background: #fff;
+  color: var(--muted);
+}
+
+.media-upload-button {
+  padding: 8px 11px;
+  border: 1px solid var(--green);
+  border-radius: 3px;
+  background: var(--green);
+  color: #fff;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 650;
+}
+
+.media-upload-button:hover {
+  background: #273d2b;
+}
+
+.media-upload-name {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.media-upload-thumbnail {
+  width: 44px;
+  height: 36px;
+  margin-left: auto;
+  border-radius: 2px;
+  object-fit: cover;
+}
+
+.upload-hint {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.5;
+}
+
+.remove-upload {
+  margin-left: auto;
+  padding: 5px 7px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  background: transparent;
+  color: #87534d;
+  cursor: pointer;
+  font: inherit;
+  font-size: 9px;
 }
 
 .admin-submit {
@@ -1469,8 +1597,14 @@ a:hover .arrow {
 
   .event-card {
     padding: 15px 0;
-    grid-template-columns: 52px 1fr 31px;
-    gap: 12px;
+    grid-template-columns: 74px 48px minmax(0, 1fr) 31px;
+    gap: 8px;
+  }
+
+  .event-image-slot,
+  .event-image {
+    width: 74px;
+    height: 60px;
   }
 
   .event-date {
