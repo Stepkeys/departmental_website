@@ -2,7 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import Navbar from './component/Navbar.jsx';
 import { loadContent, saveContent } from './data/contentRepository.js';
 import './App.css';
-const routePaths = ['/', '/staff-exco', '/people', '/project', '/events', '/more-info', '/admin'];
+const adminPath = '/nadss-admin-2026';
+const adminDashboardPath = `${adminPath}/dashboard`;
+const routePaths = ['/', '/staff-exco', '/people', '/project', '/events', '/more-info', adminPath, adminDashboardPath];
 const maxEventUploadSize = 1024 * 1024;
 const maxMediaStorageSize = 2 * 1024 * 1024;
 const eventImageTypes = ['image/jpeg', 'image/png', 'image/webp'];
@@ -135,9 +137,8 @@ function HomePage({ content, onNavigate }) {
 function ProjectGrid({ projects }) {
   if (!projects.length) {
     return (
-      <div className="empty-state empty-state-with-action">
+      <div className="empty-state">
         <p>No projects have been added yet. Check back soon.</p>
-        <a className="text-link" href="/admin">Add a project in admin <Arrow /></a>
       </div>
     );
   }
@@ -220,7 +221,7 @@ function EventsPage({ events }) {
               <a className="event-arrow" href="/more-info" aria-label={`Ask about ${event.title}`}><Arrow diagonal /></a>
             </article>
           ))}
-          {events.length === 0 && <div className="empty-state empty-state-with-action"><p>No events have been announced yet. Check back soon.</p><a className="text-link" href="/admin">Add an event in admin <Arrow /></a></div>}
+          {events.length === 0 && <div className="empty-state"><p>No events have been announced yet. Check back soon.</p></div>}
         </div>
       </section>
       <section className="notice-panel"><span className="notice-icon">✳</span><div><h2>Have an announcement to share?</h2><p>Department members can send event and news submissions to the department office.</p></div><a className="text-link" href="/more-info">Get in touch <Arrow /></a></section>
@@ -248,6 +249,21 @@ function MoreInfoPage() {
 
 function PageIntro({ eyebrow, title, description }) {
   return <header className="page-intro"><div><Eyebrow>{eyebrow}</Eyebrow><h1>{title}</h1><p>{description}</p></div><span className="page-intro-star" aria-hidden="true">✳</span></header>;
+}
+
+function AdminLandingPage({ onNavigate }) {
+  return (
+    <main className="page-main admin-page">
+      <PageIntro eyebrow="Administration" title={<>A dedicated space<br /><span>for what’s next.</span></>} description="The NADSS admin area is being prepared for a secure backend and database connection." />
+      <section className="admin-panel">
+        <div className="admin-notice"><span>ⓘ</span><p><strong>Backend/database connection pending:</strong> The content dashboard is currently a frontend-only preview. Any edits are saved in this browser and are not shared with other visitors.</p></div>
+        <div className="admin-toolbar">
+          <div><Eyebrow>Admin area</Eyebrow><h2>Continue to the dashboard</h2></div>
+          <a className="button button-primary" href={adminDashboardPath} onClick={(event) => onNavigate(event, adminDashboardPath)}>Open dashboard <Arrow /></a>
+        </div>
+      </section>
+    </main>
+  );
 }
 
 function AdminPage({ content, setContent }) {
@@ -444,7 +460,8 @@ export default function App() {
       '/project': 'Projects | NADSS',
       '/events': 'Events | NADSS',
       '/more-info': 'More information | NADSS',
-      '/admin': 'Content studio | NADSS',
+      [adminPath]: 'Admin | NADSS',
+      [adminDashboardPath]: 'Admin dashboard | NADSS',
     };
     document.title = titles[currentPath];
   }, [currentPath]);
@@ -466,7 +483,8 @@ export default function App() {
     case '/project': page = <ProjectsPage projects={content.projects} />; break;
     case '/events': page = <EventsPage events={content.events} />; break;
     case '/more-info': page = <MoreInfoPage />; break;
-    case '/admin': page = <AdminPage content={content} setContent={setContent} />; break;
+    case adminPath: page = <AdminLandingPage onNavigate={navigate} />; break;
+    case adminDashboardPath: page = <AdminPage content={content} setContent={setContent} />; break;
     default: page = <HomePage content={content} onNavigate={navigate} />;
   }
 

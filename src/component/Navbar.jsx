@@ -31,7 +31,6 @@ export default function Navbar({ activePath, onNavigate }) {
         {links.map(({ label, path }) => (
           <a className={activePath === path ? 'nav-link active' : 'nav-link'} href={path} aria-current={activePath === path ? 'page' : undefined} onClick={(event) => handleNavigate(event, path)} key={path}>{label}</a>
         ))}
-        <a className={activePath === '/admin' ? 'admin-link active' : 'admin-link'} href="/admin" aria-current={activePath === '/admin' ? 'page' : undefined} onClick={(event) => handleNavigate(event, '/admin')}>Admin <span aria-hidden="true">↗</span></a>
       </nav>
     </header>
   );
