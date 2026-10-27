@@ -251,22 +251,26 @@ function PageIntro({ eyebrow, title, description }) {
   return <header className="page-intro"><div><Eyebrow>{eyebrow}</Eyebrow><h1>{title}</h1><p>{description}</p></div><span className="page-intro-star" aria-hidden="true">✳</span></header>;
 }
 
-function AdminLandingPage({ onNavigate }) {
+function AdminLoginPage({ onLogin }) {
   return (
     <main className="page-main admin-page">
-      <PageIntro eyebrow="Administration" title={<>A dedicated space<br /><span>for what’s next.</span></>} description="The NADSS admin area is being prepared for a secure backend and database connection." />
-      <section className="admin-panel">
-        <div className="admin-notice"><span>ⓘ</span><p><strong>Backend/database connection pending:</strong> The content dashboard is currently a frontend-only preview. Any edits are saved in this browser and are not shared with other visitors.</p></div>
-        <div className="admin-toolbar">
-          <div><Eyebrow>Admin area</Eyebrow><h2>Continue to the dashboard</h2></div>
-          <a className="button button-primary" href={adminDashboardPath} onClick={(event) => onNavigate(event, adminDashboardPath)}>Open dashboard <Arrow /></a>
-        </div>
+      <PageIntro eyebrow="Administration" title={<>Welcome back<br /><span>to your workspace.</span></>} description="Sign in to manage department news, projects, events, staff, and student executives." />
+      <section className="admin-login-panel">
+        <div className="admin-notice"><span aria-hidden="true">ⓘ</span><p><strong>Temporary frontend sign-in:</strong> Backend authentication is not connected yet. Any non-empty email and password will open this local preview; this does not protect the dashboard.</p></div>
+        <form className="admin-login-form" onSubmit={onLogin}>
+          <div className="admin-login-heading"><Eyebrow>Admin area</Eyebrow><h2>Sign in</h2></div>
+          <label htmlFor="admin-email">Email address</label>
+          <input id="admin-email" name="email" type="email" autoComplete="username" placeholder="you@department.edu" required />
+          <label htmlFor="admin-password">Password</label>
+          <input id="admin-password" name="password" type="password" autoComplete="current-password" placeholder="Enter your password" required />
+          <button className="button button-primary admin-login-submit" type="submit">Continue to dashboard <Arrow /></button>
+        </form>
       </section>
     </main>
   );
 }
 
-function AdminPage({ content, setContent }) {
+function AdminPage({ content, setContent, onLogout }) {
   const [kind, setKind] = useState('news');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -403,7 +407,7 @@ function AdminPage({ content, setContent }) {
       <PageIntro eyebrow="Frontend demo · database integration ready" title={<>Keep the good<br /><span>things moving.</span></>} description="Manage department news, projects, events, staff, and student executives." />
       <section className="admin-panel">
         <div className="admin-notice"><span>ⓘ</span><p><strong>Frontend demo only:</strong> Updates are saved in this browser and are not shared with other users. The content repository is isolated in <code>src/data/contentRepository.js</code>, ready to connect to the database when the backend is available.</p></div>
-        <div className="admin-toolbar"><div><Eyebrow>Content studio</Eyebrow><h2>Manage your content</h2></div><div className="admin-tabs" role="tablist" aria-label="Content type">{[['news', 'News'], ['projects', 'Projects'], ['events', 'Events'], ['staff', 'Staff'], ['executives', 'Excos']].map(([value, label]) => <button type="button" role="tab" aria-selected={kind === value} className={kind === value ? 'admin-tab active' : 'admin-tab'} onClick={() => { setKind(value); setEditingId(null); setTitle(''); setDescription(''); setCategory(''); setImageUpload(undefined); setFlyerUpload(undefined); setNotice(''); }} key={value}>{label}<span>{content[value].length}</span></button>)}</div></div>
+        <div className="admin-toolbar"><div><Eyebrow>Content studio</Eyebrow><h2>Manage your content</h2></div><div className="admin-dashboard-actions"><div className="admin-tabs" role="tablist" aria-label="Content type">{[['news', 'News'], ['projects', 'Projects'], ['events', 'Events'], ['staff', 'Staff'], ['executives', 'Excos']].map(([value, label]) => <button type="button" role="tab" aria-selected={kind === value} className={kind === value ? 'admin-tab active' : 'admin-tab'} onClick={() => { setKind(value); setEditingId(null); setTitle(''); setDescription(''); setCategory(''); setImageUpload(undefined); setFlyerUpload(undefined); setNotice(''); }} key={value}>{label}<span>{content[value].length}</span></button>)}</div><button className="admin-logout" type="button" onClick={onLogout}>Sign out</button></div></div>
         <div className="admin-layout">
           <form className="admin-form" onSubmit={handleSubmit}>
             <span className="admin-form-label">{editingId ? 'EDIT' : 'CREATE'} {itemLabel.toUpperCase()}</span>
@@ -440,7 +444,10 @@ function AdminPage({ content, setContent }) {
 export default function App() {
   const [path, setPath] = useState(() => (typeof window === 'undefined' ? '/' : window.location.pathname));
   const [content, setContent] = useState(loadContent);
-  const currentPath = routePaths.includes(path) ? path : '/';
+  const [isAdminAuthenticated, setAdminAuthenticated] = useState(false);
+  const currentPath = path === adminDashboardPath && !isAdminAuthenticated
+    ? adminPath
+    : routePaths.includes(path) ? path : '/';
 
   useEffect(() => {
     if (typeof window === 'undefined') return undefined;
@@ -449,6 +456,12 @@ export default function App() {
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
+
+  useEffect(() => {
+    if (path === adminDashboardPath && !isAdminAuthenticated) {
+      window.history.replaceState({}, '', adminPath);
+    }
+  }, [path, isAdminAuthenticated]);
 
   useEffect(() => {
     saveContent(content);
@@ -473,12 +486,27 @@ export default function App() {
   function navigate(event, destination) {
     if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
     event.preventDefault();
+    navigateTo(destination);
+  }
+
+  function navigateTo(destination) {
     if (typeof window === 'undefined') return;
     if (destination !== window.location.pathname) {
       window.history.pushState({}, '', destination);
       setPath(destination);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+  }
+
+  function handleAdminLogin(event) {
+    event.preventDefault();
+    setAdminAuthenticated(true);
+    navigateTo(adminDashboardPath);
+  }
+
+  function handleAdminLogout() {
+    setAdminAuthenticated(false);
+    navigateTo(adminPath);
   }
 
   let page;
@@ -488,8 +516,8 @@ export default function App() {
     case '/project': page = <ProjectsPage projects={content.projects} />; break;
     case '/events': page = <EventsPage events={content.events} />; break;
     case '/more-info': page = <MoreInfoPage />; break;
-    case adminPath: page = <AdminLandingPage onNavigate={navigate} />; break;
-    case adminDashboardPath: page = <AdminPage content={content} setContent={setContent} />; break;
+    case adminPath: page = <AdminLoginPage onLogin={handleAdminLogin} />; break;
+    case adminDashboardPath: page = <AdminPage content={content} setContent={setContent} onLogout={handleAdminLogout} />; break;
     default: page = <HomePage content={content} onNavigate={navigate} />;
   }
 

@@ -1044,6 +1044,66 @@ a:hover .arrow {
   text-align: left;
 }
 
+.admin-login-panel {
+  max-width: 520px;
+  margin: 45px auto 0;
+  padding: 22px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  text-align: left;
+}
+
+.admin-login-form {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.admin-login-heading {
+  margin: 8px 0 12px;
+}
+
+.admin-login-heading .eyebrow {
+  margin-bottom: 7px;
+}
+
+.admin-login-heading h2 {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--display);
+  font-size: 23px;
+  font-weight: 550;
+}
+
+.admin-login-form label {
+  margin: 15px 0 6px;
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.admin-login-form input {
+  width: 100%;
+  padding: 11px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  font-size: 12px;
+}
+
+.admin-login-form input:focus {
+  outline: 2px solid #9ab278;
+  outline-offset: 1px;
+}
+
+.admin-login-submit {
+  width: 100%;
+  margin-top: 21px;
+  justify-content: center;
+}
+
 .admin-notice {
   padding: 13px 15px;
   display: flex;
@@ -1085,6 +1145,28 @@ a:hover .arrow {
   font-family: var(--display);
   font-size: 23px;
   font-weight: 550;
+}
+
+.admin-dashboard-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.admin-logout {
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 10px;
+}
+
+.admin-logout:hover {
+  border-color: var(--green);
+  color: var(--green);
 }
 
 .admin-tabs {
@@ -1663,6 +1745,13 @@ a:hover .arrow {
   .admin-tabs {
     width: 100%;
     justify-content: space-between;
+  }
+
+  .admin-dashboard-actions {
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 8px;
   }
 
   .admin-tab {
