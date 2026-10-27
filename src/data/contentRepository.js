@@ -49,10 +49,20 @@ const storageKey = 'nexus-department-content';
 const sampleProjectIds = new Set(['project-1', 'project-2', 'project-3']);
 const sampleEventIds = new Set(['event-1', 'event-2', 'event-3']);
 
+function getStorage() {
+  if (typeof window === 'undefined' || !window.localStorage) {
+    return null;
+  }
+  return window.localStorage;
+}
+
 // Replace this browser-storage adapter with database calls when the backend is ready.
 export function loadContent() {
+  const storage = getStorage();
+  if (!storage) return defaultContent;
+
   try {
-    const saved = JSON.parse(window.localStorage.getItem(storageKey));
+    const saved = JSON.parse(storage.getItem(storageKey));
     if (!saved || typeof saved !== 'object') return defaultContent;
     return {
       news: Array.isArray(saved.news) ? saved.news : initialNews,
@@ -67,5 +77,12 @@ export function loadContent() {
 }
 
 export function saveContent(content) {
-  window.localStorage.setItem(storageKey, JSON.stringify(content));
+  const storage = getStorage();
+  if (!storage) return;
+
+  try {
+    storage.setItem(storageKey, JSON.stringify(content));
+  } catch {
+    // Ignore storage failures so the app remains usable when the browser blocks writes.
+  }
 }

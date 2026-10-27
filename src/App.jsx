@@ -438,11 +438,13 @@ function AdminPage({ content, setContent }) {
 }
 
 export default function App() {
-  const [path, setPath] = useState(() => window.location.pathname);
+  const [path, setPath] = useState(() => (typeof window === 'undefined' ? '/' : window.location.pathname));
   const [content, setContent] = useState(loadContent);
   const currentPath = routePaths.includes(path) ? path : '/';
 
   useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+
     const handlePopState = () => setPath(window.location.pathname);
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
@@ -453,6 +455,8 @@ export default function App() {
   }, [content]);
 
   useEffect(() => {
+    if (typeof document === 'undefined') return;
+
     const titles = {
       '/': 'NADSS | Nigeria Association of Data Science Students @ OSUN STATE UNIVERSITY',
       '/staff-exco': 'Staff & Exco | NADSS',
@@ -469,6 +473,7 @@ export default function App() {
   function navigate(event, destination) {
     if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
     event.preventDefault();
+    if (typeof window === 'undefined') return;
     if (destination !== window.location.pathname) {
       window.history.pushState({}, '', destination);
       setPath(destination);
@@ -489,7 +494,7 @@ export default function App() {
   }
 
   function handleInternalLink(event) {
-    if (event.defaultPrevented || !(event.target instanceof Element)) return;
+    if (event.defaultPrevented || typeof Element === 'undefined' || !(event.target instanceof Element)) return;
     const anchor = event.target.closest('a[href^="/"]');
     if (anchor) navigate(event, anchor.pathname);
   }
