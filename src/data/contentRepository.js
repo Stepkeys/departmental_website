@@ -42,6 +42,7 @@ const defaultContent = {
   news: initialNews,
   projects: [],
   events: [],
+  ads: [],
   staff: initialStaff,
   executives: initialExecutives,
 };
@@ -56,6 +57,17 @@ function getStorage() {
   return window.localStorage;
 }
 
+function isValidBusinessAd(ad) {
+  if (!ad || typeof ad !== 'object' || typeof ad.id !== 'string' || typeof ad.title !== 'string' || typeof ad.description !== 'string' || typeof ad.website !== 'string') {
+    return false;
+  }
+  try {
+    return ['http:', 'https:'].includes(new URL(ad.website).protocol);
+  } catch {
+    return false;
+  }
+}
+
 // Replace this browser-storage adapter with database calls when the backend is ready.
 export function loadContent() {
   const storage = getStorage();
@@ -68,6 +80,7 @@ export function loadContent() {
       news: Array.isArray(saved.news) ? saved.news : initialNews,
       projects: Array.isArray(saved.projects) ? saved.projects.filter((item) => !sampleProjectIds.has(item?.id)) : [],
       events: Array.isArray(saved.events) ? saved.events.filter((item) => !sampleEventIds.has(item?.id)) : [],
+      ads: Array.isArray(saved.ads) ? saved.ads.filter(isValidBusinessAd) : [],
       staff: Array.isArray(saved.staff) ? saved.staff : initialStaff,
       executives: Array.isArray(saved.executives) ? saved.executives : initialExecutives,
     };

@@ -119,6 +119,37 @@ function HomePage({ content, onNavigate }) {
           </div>
         </section>
 
+        <section className="content-section business-ads-section">
+          <SectionHeading
+            eyebrow="Business spotlight"
+            title="Make your business global with us."
+            description="Share what you do with a growing community of curious minds, creators, and future leaders."
+          />
+          {content.ads.length > 0 ? (
+            <div className="business-ad-grid">
+              {content.ads.map((ad) => (
+                <article className="business-ad-card" key={ad.id}>
+                  <div className="business-ad-image">
+                    {ad.image ? <img src={ad.image} alt={`${ad.title} business`} /> : <span aria-hidden="true">✳</span>}
+                    <span className="business-ad-badge">Featured business</span>
+                  </div>
+                  <div className="business-ad-content">
+                    <span className="business-ad-category">{ad.category}</span>
+                    <h3>{ad.title}</h3>
+                    <p>{ad.description}</p>
+                    <a href={ad.website} target="_blank" rel="noopener noreferrer">Visit {ad.title} <Arrow diagonal /></a>
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div className="business-ad-empty">
+              <p>Your business could be featured here. Connect with us to reach the next generation of innovators.</p>
+              <a className="button button-primary" href="/more-info" onClick={(event) => onNavigate(event, '/more-info')}>Let’s work together <Arrow /></a>
+            </div>
+          )}
+        </section>
+
         <section className="content-section projects-section">
           <SectionHeading eyebrow="Made around here" title="Small teams. Big what-ifs." description="A few things our community has been dreaming up, designing, and bringing to life." action={<a className="text-link" href="/project" onClick={(event) => onNavigate(event, '/project')}>See all projects <Arrow /></a>} />
           <ProjectGrid projects={content.projects.slice(0, 3)} />
@@ -254,7 +285,7 @@ function PageIntro({ eyebrow, title, description }) {
 function AdminLoginPage({ onLogin }) {
   return (
     <main className="page-main admin-page">
-      <PageIntro eyebrow="Administration" title={<>Welcome back<br /><span>to your workspace.</span></>} description="Sign in to manage department news, projects, events, staff, and student executives." />
+      <PageIntro eyebrow="Administration" title={<>Welcome back<br /><span>to your workspace.</span></>} description="Sign in to manage department news, projects, events, business ads, staff, and student executives." />
       <section className="admin-login-panel">
         <div className="admin-notice"><span aria-hidden="true">ⓘ</span><p><strong>Temporary frontend sign-in:</strong> Backend authentication is not connected yet. Any non-empty email and password will open this local preview; this does not protect the dashboard.</p></div>
         <form className="admin-login-form" onSubmit={onLogin}>
@@ -275,6 +306,7 @@ function AdminPage({ content, setContent, onLogout }) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState('');
+  const [websiteUrl, setWebsiteUrl] = useState('');
   const [notice, setNotice] = useState('');
   const [editingId, setEditingId] = useState(null);
   const [imageUpload, setImageUpload] = useState(undefined);
@@ -283,13 +315,25 @@ function AdminPage({ content, setContent, onLogout }) {
   const flyerInputRef = useRef(null);
   const entries = content[kind];
   const isPerson = kind === 'staff' || kind === 'executives';
-  const itemLabel = kind === 'news' ? 'a news update' : kind === 'projects' ? 'a project' : kind === 'events' ? 'an event' : kind === 'staff' ? 'a staff member' : 'a student executive';
+  const isAd = kind === 'ads';
+  const itemLabel = kind === 'news' ? 'a news update' : kind === 'projects' ? 'a project' : kind === 'events' ? 'an event' : isAd ? 'a business ad' : kind === 'staff' ? 'a staff member' : 'a student executive';
 
   function handleSubmit(event) {
     event.preventDefault();
     if (!title.trim() || (!isPerson && !description.trim()) || (isPerson && !category.trim())) {
       setNotice(isPerson ? 'Add a name and role before saving.' : 'Add a title and description before publishing.');
       return;
+    }
+    let website = '';
+    if (isAd) {
+      try {
+        const parsedWebsite = new URL(websiteUrl.trim());
+        if (!['http:', 'https:'].includes(parsedWebsite.protocol)) throw new Error('Unsupported website protocol.');
+        website = parsedWebsite.href;
+      } catch {
+        setNotice('Enter a valid business website beginning with https:// or http://.');
+        return;
+      }
     }
     const id = editingId || `${kind}-${Date.now()}`;
     const existingItem = entries.find((item) => item.id === editingId);
@@ -299,7 +343,9 @@ function AdminPage({ content, setContent, onLogout }) {
         ? { id, day: existingItem?.day || new Date().getDate().toString().padStart(2, '0'), month: existingItem?.month || new Date().toLocaleString('en', { month: 'short' }).toUpperCase(), category: category.trim() || 'Department event', title: title.trim(), time: existingItem?.time || 'Time to be announced', location: description.trim() }
         : kind === 'projects'
           ? { id, category: category.trim() || 'Student project', title: title.trim(), description: description.trim(), initials: title.trim().slice(0, 2).toUpperCase(), color: existingItem?.color || ['lavender', 'mint', 'peach'][content.projects.length % 3], team: existingItem?.team || 'Department community' }
-          : { id, category: category.trim() || 'Department news', date: new Date().toLocaleDateString('en', { month: 'long', day: 'numeric', year: 'numeric' }), title: title.trim(), excerpt: description.trim() };
+          : isAd
+            ? { id, category: category.trim() || 'Featured business', title: title.trim(), description: description.trim(), website }
+            : { id, category: category.trim() || 'Department news', date: new Date().toLocaleDateString('en', { month: 'long', day: 'numeric', year: 'numeric' }), title: title.trim(), excerpt: description.trim() };
     if (kind === 'events') {
       const image = imageUpload === undefined ? existingItem?.image : imageUpload?.data;
       const flyer = flyerUpload === undefined ? existingItem?.flyer : flyerUpload?.data;
@@ -310,7 +356,7 @@ function AdminPage({ content, setContent, onLogout }) {
       newItem.flyerName = flyer ? (flyerUpload === undefined ? existingItem?.flyerName : flyerUpload.name) : null;
       newItem.flyerType = flyer ? (flyerUpload === undefined ? existingItem?.flyerType : flyerUpload.type) : null;
     }
-    if (kind === 'projects') {
+    if (kind === 'projects' || isAd) {
       const image = imageUpload === undefined ? existingItem?.image : imageUpload?.data;
       newItem.image = image || null;
       newItem.imageName = image ? (imageUpload === undefined ? existingItem?.imageName : imageUpload.name) : null;
@@ -322,17 +368,17 @@ function AdminPage({ content, setContent, onLogout }) {
       newItem.imageName = image ? (imageUpload === undefined ? existingItem?.imageName : imageUpload.name) : null;
       newItem.imageType = image ? (imageUpload === undefined ? existingItem?.imageType : imageUpload.type) : null;
     }
-    if (kind === 'events' || kind === 'projects' || isPerson) {
+    if (kind === 'events' || kind === 'projects' || isAd || isPerson) {
       const updatedItems = editingId
         ? entries.map((item) => item.id === editingId ? newItem : item)
         : [newItem, ...entries];
       const mediaContent = { ...content, [kind]: updatedItems };
-      const mediaItems = [...mediaContent.events, ...mediaContent.projects, ...mediaContent.staff, ...mediaContent.executives];
+      const mediaItems = [...mediaContent.events, ...mediaContent.projects, ...mediaContent.ads, ...mediaContent.staff, ...mediaContent.executives];
       const uploadSize = mediaItems.reduce((total, item) => total
         + Math.ceil((item.image?.length || 0) * 0.75)
         + Math.ceil((item.flyer?.length || 0) * 0.75), 0);
       if (uploadSize > maxMediaStorageSize) {
-        setNotice('Event, project, staff, and exco images and flyers can use up to 2 MB combined in this browser. Remove an existing upload or choose smaller files.');
+        setNotice('Event, project, business ad, staff, and exco images and flyers can use up to 2 MB combined in this browser. Remove an existing upload or choose smaller files.');
         return;
       }
     }
@@ -346,6 +392,7 @@ function AdminPage({ content, setContent, onLogout }) {
     setTitle('');
     setDescription('');
     setCategory('');
+    setWebsiteUrl('');
     setEditingId(null);
     setImageUpload(undefined);
     setFlyerUpload(undefined);
@@ -357,7 +404,8 @@ function AdminPage({ content, setContent, onLogout }) {
     setTitle(item.name || item.title);
     setCategory(item.role || item.category || '');
     setDescription(item.focus || item.location || item.excerpt || item.description || '');
-    setImageUpload(item.image ? { data: item.image, name: item.imageName || (kind === 'events' ? 'Event picture' : 'Project image'), type: item.imageType || 'image/jpeg' } : null);
+    setWebsiteUrl(item.website || '');
+    setImageUpload(item.image ? { data: item.image, name: item.imageName || (kind === 'events' ? 'Event picture' : isAd ? 'Business image' : 'Project image'), type: item.imageType || 'image/jpeg' } : null);
     setFlyerUpload(item.flyer ? { data: item.flyer, name: item.flyerName || 'Event flyer', type: item.flyerType || 'application/pdf' } : null);
     setNotice('');
   }
@@ -368,7 +416,7 @@ function AdminPage({ content, setContent, onLogout }) {
     input.value = '';
     if (!file) return;
     try {
-      const label = kind === 'events' ? 'event picture' : kind === 'projects' ? 'project image' : 'profile picture';
+      const label = kind === 'events' ? 'event picture' : kind === 'projects' ? 'project image' : isAd ? 'business image' : 'profile picture';
       setImageUpload(await readUpload(file, { label }));
       setNotice('');
     } catch (error) {
@@ -396,6 +444,7 @@ function AdminPage({ content, setContent, onLogout }) {
       setTitle('');
       setCategory('');
       setDescription('');
+      setWebsiteUrl('');
       setImageUpload(undefined);
       setFlyerUpload(undefined);
     }
@@ -404,21 +453,25 @@ function AdminPage({ content, setContent, onLogout }) {
 
   return (
     <main className="page-main admin-page">
-      <PageIntro eyebrow="Frontend demo · database integration ready" title={<>Keep the good<br /><span>things moving.</span></>} description="Manage department news, projects, events, staff, and student executives." />
+      <PageIntro eyebrow="Frontend demo · database integration ready" title={<>Keep the good<br /><span>things moving.</span></>} description="Manage department news, projects, events, business ads, staff, and student executives." />
       <section className="admin-panel">
         <div className="admin-notice"><span>ⓘ</span><p><strong>Frontend demo only:</strong> Updates are saved in this browser and are not shared with other users. The content repository is isolated in <code>src/data/contentRepository.js</code>, ready to connect to the database when the backend is available.</p></div>
-        <div className="admin-toolbar"><div><Eyebrow>Content studio</Eyebrow><h2>Manage your content</h2></div><div className="admin-dashboard-actions"><div className="admin-tabs" role="tablist" aria-label="Content type">{[['news', 'News'], ['projects', 'Projects'], ['events', 'Events'], ['staff', 'Staff'], ['executives', 'Excos']].map(([value, label]) => <button type="button" role="tab" aria-selected={kind === value} className={kind === value ? 'admin-tab active' : 'admin-tab'} onClick={() => { setKind(value); setEditingId(null); setTitle(''); setDescription(''); setCategory(''); setImageUpload(undefined); setFlyerUpload(undefined); setNotice(''); }} key={value}>{label}<span>{content[value].length}</span></button>)}</div><button className="admin-logout" type="button" onClick={onLogout}>Sign out</button></div></div>
+        <div className="admin-toolbar"><div><Eyebrow>Content studio</Eyebrow><h2>Manage your content</h2></div><div className="admin-dashboard-actions"><div className="admin-tabs" role="tablist" aria-label="Content type">{[['news', 'News'], ['projects', 'Projects'], ['events', 'Events'], ['ads', 'Business ads'], ['staff', 'Staff'], ['executives', 'Excos']].map(([value, label]) => <button type="button" role="tab" aria-selected={kind === value} className={kind === value ? 'admin-tab active' : 'admin-tab'} onClick={() => { setKind(value); setEditingId(null); setTitle(''); setDescription(''); setCategory(''); setWebsiteUrl(''); setImageUpload(undefined); setFlyerUpload(undefined); setNotice(''); }} key={value}>{label}<span>{content[value].length}</span></button>)}</div><button className="admin-logout" type="button" onClick={onLogout}>Sign out</button></div></div>
         <div className="admin-layout">
           <form className="admin-form" onSubmit={handleSubmit}>
             <span className="admin-form-label">{editingId ? 'EDIT' : 'CREATE'} {itemLabel.toUpperCase()}</span>
-            <label htmlFor="content-title">{isPerson ? 'Name' : 'Title'}</label><input id="content-title" value={title} onChange={(event) => setTitle(event.target.value)} placeholder={isPerson ? 'Add their name' : 'Give it a good name'} maxLength={90} required />
-            <label htmlFor="content-category">{isPerson ? 'Role' : 'Category'}{kind !== 'staff' && kind !== 'executives' && <span> (optional)</span>}</label><input id="content-category" value={category} onChange={(event) => setCategory(event.target.value)} placeholder={isPerson ? 'e.g. Lecturer or President' : kind === 'events' ? 'e.g. Workshop' : 'e.g. Department news'} maxLength={40} required={isPerson} />
-            <label htmlFor="content-description">{kind === 'events' ? 'Location' : kind === 'staff' ? 'Focus area' : kind === 'executives' ? 'Short bio' : 'Description'}{isPerson && <span> (optional)</span>}</label><textarea id="content-description" value={description} onChange={(event) => setDescription(event.target.value)} placeholder={kind === 'events' ? 'Where will it happen?' : isPerson ? 'Add a little more information' : 'What should people know?'} rows="4" maxLength={240} required={!isPerson} />
-            {(kind === 'events' || kind === 'projects' || isPerson) && <>
-              <label htmlFor={`${kind}-picture`}>{kind === 'events' ? 'Event picture' : kind === 'projects' ? 'Project image' : 'Profile picture'} <span>(optional, JPG/PNG/WebP, max 1 MB)</span></label>
+            <label htmlFor="content-title">{isPerson ? 'Name' : isAd ? 'Business name' : 'Title'}</label><input id="content-title" value={title} onChange={(event) => setTitle(event.target.value)} placeholder={isPerson ? 'Add their name' : isAd ? 'Enter the business name' : 'Give it a good name'} maxLength={90} required />
+            <label htmlFor="content-category">{isPerson ? 'Role' : isAd ? 'Business category' : 'Category'}{kind !== 'staff' && kind !== 'executives' && <span> (optional)</span>}</label><input id="content-category" value={category} onChange={(event) => setCategory(event.target.value)} placeholder={isPerson ? 'e.g. Lecturer or President' : isAd ? 'e.g. Fashion, food, or technology' : kind === 'events' ? 'e.g. Workshop' : 'e.g. Department news'} maxLength={40} required={isPerson} />
+            <label htmlFor="content-description">{kind === 'events' ? 'Location' : isAd ? 'Business description' : kind === 'staff' ? 'Focus area' : kind === 'executives' ? 'Short bio' : 'Description'}{isPerson && <span> (optional)</span>}</label><textarea id="content-description" value={description} onChange={(event) => setDescription(event.target.value)} placeholder={kind === 'events' ? 'Where will it happen?' : isAd ? 'Describe the business and what it offers' : isPerson ? 'Add a little more information' : 'What should people know?'} rows="4" maxLength={240} required={!isPerson} />
+            {isAd && <>
+              <label htmlFor="business-website">Business website</label>
+              <input id="business-website" type="url" inputMode="url" value={websiteUrl} onChange={(event) => setWebsiteUrl(event.target.value)} placeholder="https://example.com" pattern="https?://.+" title="Enter a website beginning with http:// or https://" maxLength={200} required />
+            </>}
+            {(kind === 'events' || kind === 'projects' || isAd || isPerson) && <>
+              <label htmlFor={`${kind}-picture`}>{kind === 'events' ? 'Event picture' : kind === 'projects' ? 'Project image' : isAd ? 'Business image' : 'Profile picture'} <span>(optional, JPG/PNG/WebP, max 1 MB)</span></label>
               <input ref={imageInputRef} className="event-file-input" id={`${kind}-picture`} type="file" accept="image/jpeg,image/png,image/webp" onChange={handleImageUpload} />
               <div className="media-upload-controls">
-                <button className="media-upload-button" type="button" onClick={() => imageInputRef.current?.click()}>{imageUpload?.data ? 'Change image' : isPerson ? 'Upload profile picture' : 'Upload image'}</button>
+                <button className="media-upload-button" type="button" onClick={() => imageInputRef.current?.click()}>{imageUpload?.data ? 'Change image' : isPerson ? 'Upload profile picture' : isAd ? 'Upload business image' : 'Upload image'}</button>
                 {imageUpload?.data && <><span className="media-upload-name">{imageUpload.name}</span><img className="media-upload-thumbnail" src={imageUpload.data} alt="Selected image preview" /><button className="remove-upload" type="button" onClick={() => setImageUpload(null)}>Remove</button></>}
               </div>
               {kind === 'events' && <>
@@ -429,12 +482,12 @@ function AdminPage({ content, setContent, onLogout }) {
                 {flyerUpload?.data && <><span className="media-upload-name">{flyerUpload.name}</span><button className="remove-upload" type="button" onClick={() => setFlyerUpload(null)}>Remove</button></>}
               </div>
               </>}
-              <p className="upload-hint">Images and flyers are saved in this browser, with a 2 MB total limit across events, projects, staff, and excos.</p>
+              <p className="upload-hint">Images and flyers are saved in this browser, with a 2 MB total limit across events, projects, business ads, staff, and excos.</p>
             </>}
-            <div className="admin-form-actions"><button className="button button-primary admin-submit" type="submit">{editingId ? 'Save changes' : isPerson ? 'Add to directory' : 'Publish update'} <Arrow /></button>{editingId && <button className="cancel-edit" type="button" onClick={() => { setEditingId(null); setTitle(''); setCategory(''); setDescription(''); setImageUpload(undefined); setFlyerUpload(undefined); setNotice(''); }}>Cancel</button>}</div>
+            <div className="admin-form-actions"><button className="button button-primary admin-submit" type="submit">{editingId ? 'Save changes' : isPerson ? 'Add to directory' : isAd ? 'Publish business ad' : 'Publish update'} <Arrow /></button>{editingId && <button className="cancel-edit" type="button" onClick={() => { setEditingId(null); setTitle(''); setCategory(''); setDescription(''); setWebsiteUrl(''); setImageUpload(undefined); setFlyerUpload(undefined); setNotice(''); }}>Cancel</button>}</div>
             {notice && <p className="admin-feedback" role="status">{notice}</p>}
           </form>
-          <div className="admin-items"><div className="admin-items-heading"><span>EXISTING {kind.toUpperCase()}</span><span>{entries.length} ITEMS</span></div>{entries.length ? entries.map((item) => <article className="admin-item" key={item.id}><div><span>{item.role || item.category}</span><h3>{item.name || item.title}</h3></div><div className="admin-item-actions"><button type="button" className="edit-button" onClick={() => editItem(item)} aria-label={`Edit ${item.name || item.title}`}>Edit</button><button type="button" className="remove-button" onClick={() => removeItem(item.id)} aria-label={`Remove ${item.name || item.title}`}>Remove</button></div></article>) : <p className="empty-state admin-empty">No {kind} yet. Create your first update.</p>}</div>
+          <div className="admin-items"><div className="admin-items-heading"><span>{isAd ? 'EXISTING BUSINESS ADS' : `EXISTING ${kind.toUpperCase()}`}</span><span>{entries.length} ITEMS</span></div>{entries.length ? entries.map((item) => <article className="admin-item" key={item.id}><div><span>{item.role || item.category}</span><h3>{item.name || item.title}</h3></div><div className="admin-item-actions"><button type="button" className="edit-button" onClick={() => editItem(item)} aria-label={`Edit ${item.name || item.title}`}>Edit</button><button type="button" className="remove-button" onClick={() => removeItem(item.id)} aria-label={`Remove ${item.name || item.title}`}>Remove</button></div></article>) : <p className="empty-state admin-empty">No {kind} yet. Create your first update.</p>}</div>
         </div>
       </section>
     </main>

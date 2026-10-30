@@ -439,6 +439,113 @@ a:hover .arrow {
   font-size: 10px;
 }
 
+.business-ads-section {
+  background: #f8faf9;
+}
+
+.business-ad-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+  text-align: left;
+}
+
+.business-ad-card {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: var(--paper);
+}
+
+.business-ad-image {
+  aspect-ratio: 1.8;
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #dcecf0, #e8e4d7);
+  color: var(--green);
+  font-size: 48px;
+}
+
+.business-ad-image img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.business-ad-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  padding: 6px 9px;
+  border-radius: 2px;
+  background: var(--paper);
+  color: var(--green);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+
+.business-ad-content {
+  padding: 17px 18px 19px;
+}
+
+.business-ad-category {
+  color: var(--green);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.business-ad-content h3 {
+  margin: 7px 0;
+  color: var(--ink);
+  font-family: var(--display);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.business-ad-content p,
+.business-ad-empty p {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.7;
+}
+
+.business-ad-content > a {
+  margin-top: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink);
+  font-size: 10px;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.business-ad-content > a:hover {
+  color: var(--green);
+}
+
+.business-ad-empty {
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+}
+
+.business-ad-empty p {
+  max-width: 480px;
+  margin: 0;
+}
+
 .projects-section {
   padding-top: 69px;
   padding-bottom: 93px;
@@ -1171,6 +1278,7 @@ a:hover .arrow {
 
 .admin-tabs {
   display: flex;
+  flex-wrap: wrap;
   gap: 4px;
 }
 
@@ -1479,6 +1587,10 @@ a:hover .arrow {
     padding-top: 65px;
     padding-bottom: 65px;
   }
+
+  .business-ad-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 650px) {
@@ -1575,6 +1687,15 @@ a:hover .arrow {
 
   .news-card h3 {
     margin-top: 16px;
+  }
+
+  .business-ad-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .business-ad-empty {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .project-grid,
